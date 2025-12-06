@@ -4,18 +4,23 @@
   "version": "1.0.0",
   "description": "",
   "main": "app.js",
- "scripts": {
-  "start": "node backend/app.js",
-  "dev": "cross-env NODE_ENV=DEVELOPMENT nodemon backend/app.js",
-  "prod": "cross-env NODE_ENV=PRODUCTION nodemon backend/app.js",
-  "seeder": "node backend/seeder/seeder.js"
-},
+  "scripts": {
+    "start": "node backend/app.js",
+    "dev": "cross-env NODE_ENV=DEVELOPMENT nodemon backend/app.js",
+    "prod": "cross-env NODE_ENV=PRODUCTION nodemon backend/app.js",
+    "seeder": "node backend/seeder/seeder.js"
+  },
   "author": "Milica",
   "license": "ISC",
   "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cookie-parser": "^1.4.7",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
-    "mongoose": "^9.0.0"
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^9.0.0",
+    "nodemailer": "^7.0.11",
+    "qs": "^6.14.0"
   },
   "devDependencies": {
     "cross-env": "^10.1.0",
