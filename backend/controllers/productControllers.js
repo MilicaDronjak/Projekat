@@ -76,3 +76,84 @@ export const deleteProduct = catchAsyncErrors (async (req, res) => {
         message:"Product Deleted"
     });
 });
+
+export const createProductReview = catchAsyncErrors(async (req, res, next) => { 
+    const { rating, comment, productId} = req.body;
+
+    const review = {
+        user: req?.user?._id,
+        rating: Number(rating),
+        comment,
+    };
+
+    const product = await Product.findById(productId);
+
+    if(!product) {
+        return next(new ErrorHandler("Product not found", 404));
+    }
+
+    const isReviewed = product?.reviews?.find(
+        (r) => r.user.toString() === req?.user?._id.toString()
+    );
+
+    if(isReviewed) {
+        product.reviews.forEach((review) => {
+            if (review?.user?.toString() === req?.user?._id.toString()){
+                review.comment = comment;
+                review.rating = rating;
+            }
+        })
+    } else {
+        product.reviews.push(review);
+        product.numOfReviews = product.reviews.length;
+    }
+
+    product.rating =
+        product.reviews.reduce((acc, item) => item.rating + acc,0) /
+        product.reviews.length;
+
+    await product.save ({validateBeforeSave: false});
+    
+
+    res.status(200).json({
+        success: true,
+    });
+});
+
+export const getProductReviews = catchAsyncErrors(async (req, res, next) => { 
+    const product = await Product.findById(req.query.id);
+
+    if(!product) {
+        return next (new ErrorHandler("Product not found", 404));
+    }
+
+    res.status(200).json({
+        reviews: product.reviews,
+    })
+}) 
+
+export const deleteReview = catchAsyncErrors(async (req, res, next) => { 
+
+    let product = await Product.findById(req.query.productid);
+
+    if(!product) {
+        return next(new ErrorHandler("Product not found", 404));
+    }
+
+    const reviews = product?.reviews?.filter(
+        (review) => review._id.toString() !== req?.query?.id.toString()
+    );
+
+    const numOfReviews = reviews.length
+
+    const rating =
+        numOfReviews === 0 ? 0 : product.reviews.reduce((acc, item) => item.rating + acc,0) / product.reviews.length;
+        numOfReviews;
+
+    product = await Product.findByIdAndUpdate(req.query.productid, { reviews, numOfReviews, rating}, {new: true})
+
+    res.status(200).json({
+        success: true,
+        product
+    });
+});
