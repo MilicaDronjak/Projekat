@@ -1,4 +1,4 @@
-import React, {useState} from "react";
+import React, {useEffect, useState} from "react";
 import {useNavigate, useSearchParams} from "react-router-dom"
 import { getPriceQueryParams } from "../../helpers/helpers";
 import { PRODUCT_CATEGORIES } from "../constants/constants";
@@ -11,7 +11,35 @@ const Filters = () => {
   const navigate = useNavigate();
   let [searchParams] = useSearchParams();
 
+  useEffect(() => {
+    searchParams.has("min") && setMin(searchParams.get("min"));
+    searchParams.has("max") && setMax(searchParams.get("max"));
 
+  })
+
+  const handleClick = (checkbox) => {
+    const checkboxes = document.getElementsByName(checkbox.name);
+
+    checkboxes.forEach((item) => {
+      if(item !== checkbox) item.checked = false
+    });
+
+    if(checkbox.checked === false) {
+      if(searchParams.has(checkbox.name)) {
+        searchParams.delete(checkbox.name);
+        const path = window.location.pathname + "?" + searchParams.toString();
+        navigate(path);
+      }
+      }else {
+        if(searchParams.has(checkbox.name)){
+          searchParams.set(checkbox.name, checkbox.value);
+        }else {
+          searchParams.append(checkbox.name, checkbox.value);
+        }
+        const path = window.location.pathname + "?" + searchParams.toString();
+        navigate(path);
+    }
+};
   const handleButtonClick = (e) => {
     e.preventDefault();
 
@@ -22,13 +50,11 @@ const Filters = () => {
     navigate(path);
   }
 
-  const handleClick = (checkbox) => {
-    const checkboxes = document.getElementsByName(checkbox.name);
-
-    checkboxes.forEach((item) => {
-      if(item !== checkbox) item.checked = false
-    });
-  };
+  const defaultCheckHandler = (chechboxType, checkboxValue) => {
+    const value = searchParams.get(chechboxType);
+    if (checkboxValue === value) return true;
+    return false;
+  }
 
     return (
         <div className="border p-3 filter">
@@ -78,6 +104,7 @@ const Filters = () => {
           name="category"
           id="check4"
           value={category}
+          defaultChecked={defaultCheckHandler("category", category)}
           onClick={(e) => handleClick(e.target)}
         />
         <label className="form-check-label" for="check4"> {""} {category} </label>
