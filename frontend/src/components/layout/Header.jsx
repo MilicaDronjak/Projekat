@@ -1,16 +1,27 @@
 import React from "react";
 import Search from "./Search";
 import { useGetMeQuery } from "../../redux/api/userApi";
-
-
-
+import { useSelector } from "react-redux";
+import { Link, useNavigate } from "react-router-dom";
+import {useLazyLogoutQuery} from "../../redux/api/authApi"
 
 const Header = () => {
 
-  const {data} = useGetMeQuery();
+  const navigate = useNavigate()
 
-    return(
-        <nav className="navbar row">
+  const {isLoading} = useGetMeQuery();
+
+  const [logout] = useLazyLogoutQuery();
+
+  const {user} = useSelector ((state) => state.auth);
+
+  const logoutHandler = () => {
+    logout();
+    navigate(0)
+  }
+
+  return(
+    <nav className="navbar row">
       <div className="col-12 col-md-3 ps-5">
         <div className="navbar-brand">
           <a href="/">
@@ -27,32 +38,32 @@ const Header = () => {
           <span className="ms-1" id="cart_count">0</span>
         </a>
 
-        <div className="ms-4 dropdown">
-          <button
-            className="btn dropdown-toggle text-white"
-            type="button"
-            id="dropDownMenuButton"
-            data-bs-toggle="dropdown"
-            aria-expanded="false"
-          >
-        
-            <span>User</span>
-          </button>
-          <div className="dropdown-menu w-100" aria-labelledby="dropDownMenuButton">
-            <a className="dropdown-item" href="/admin/dashboard"> Dashboard </a>
-
-            <a className="dropdown-item" href="/me/orders"> Orders </a>
-
-            <a className="dropdown-item" href="/me/profile"> Profile </a>
-
-            <a className="dropdown-item text-danger" href="/"> Logout </a>
+        {user ? (
+          <div className="ms-4 dropdown">
+            <button
+              className="btn dropdown-toggle text-white"
+              type="button"
+              id="dropDownMenuButton"
+              data-bs-toggle="dropdown"
+              aria-expanded="false"
+            >
+              <span>{user?.name}</span>
+            </button>
+            <div className="dropdown-menu w-100" aria-labelledby="dropDownMenuButton">
+              <Link className="dropdown-item" to="/admin/dashboard"> Dashboard </Link>
+              <Link className="dropdown-item" to="/me/orders"> Orders </Link>
+              <Link className="dropdown-item" to="/me/profile"> Profile </Link>
+              <Link className="dropdown-item text-danger" to="/" onClick={logoutHandler}> Logout </Link>
+            </div>
           </div>
-        </div>
-
-        <a href="/login" className="btn ms-4" id="login_btn"> Login </a>
+        ) : (
+          !isLoading && (
+            <Link to="/login" className="btn ms-4" id="login_btn">Login</Link>
+          )
+        )}
       </div>
     </nav>
-    )
+  )
 }
 
 export default Header
