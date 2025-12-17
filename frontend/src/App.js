@@ -11,8 +11,9 @@ import Register from "./components/auth/Register";
 import Profile from "./components/user/Profile";
 import UpdateProfile from "./components/user/UpdateProfile";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
+import ForgotPassword from "./components/auth/ForgotPassword";
 import UpdatePassword from "./components/user/UpdatePassword";
-
+import ResetPassword from "./components/auth/ResetPassword";
 
 function App() {
   return (
@@ -26,6 +27,8 @@ function App() {
               <Route path="/product/:id" element={<ProductDetails></ProductDetails>}></Route>
               <Route path="/login" element={<Login></Login>}></Route>
               <Route path="/register" element={<Register></Register>}></Route>
+              <Route path="/password/forgot" element={<ForgotPassword></ForgotPassword>}></Route>
+              <Route path="/password/reset/:token" element={<ResetPassword></ResetPassword>}></Route>
               <Route path="/me/profile" element={<ProtectedRoute><Profile></Profile></ProtectedRoute>}></Route>
               <Route path="/me/update_profile" element={<ProtectedRoute><UpdateProfile></UpdateProfile></ProtectedRoute>}></Route>
               <Route path="/me/update_password" element={<ProtectedRoute><UpdatePassword></UpdatePassword></ProtectedRoute>}></Route>
