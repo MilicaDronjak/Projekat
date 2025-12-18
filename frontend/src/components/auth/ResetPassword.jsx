@@ -4,7 +4,7 @@ import toast from "react-hot-toast";
 import { useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router-dom";
 import ForgotPassword from "./ForgotPassword";
-
+import MetaData from "../layout/MetaData"
 const ResetPassword = () => {
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
@@ -40,6 +40,8 @@ const ResetPassword = () => {
     };
 
     return  (
+      <>
+        <MetaData title={'Reset Password'}></MetaData>
     <div className="row wrapper">
       <div className="col-10 col-lg-5">
         <form
@@ -89,6 +91,7 @@ const ResetPassword = () => {
         </form>
       </div>
     </div>
+    </>
   );
 };
 

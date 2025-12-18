@@ -14,6 +14,7 @@ import ProtectedRoute from "./components/auth/ProtectedRoute";
 import ForgotPassword from "./components/auth/ForgotPassword";
 import UpdatePassword from "./components/user/UpdatePassword";
 import ResetPassword from "./components/auth/ResetPassword";
+import Cart from "./components/cart/Cart";
 
 function App() {
   return (
@@ -32,6 +33,7 @@ function App() {
               <Route path="/me/profile" element={<ProtectedRoute><Profile></Profile></ProtectedRoute>}></Route>
               <Route path="/me/update_profile" element={<ProtectedRoute><UpdateProfile></UpdateProfile></ProtectedRoute>}></Route>
               <Route path="/me/update_password" element={<ProtectedRoute><UpdatePassword></UpdatePassword></ProtectedRoute>}></Route>
+              <Route path="/cart" element={<Cart></Cart>}></Route>
 
             </Routes>
             </div>
