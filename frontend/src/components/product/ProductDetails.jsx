@@ -3,20 +3,24 @@ import { useParams } from "react-router-dom";
 import { useGetProductDetailsQuery } from "../../redux/api/productApi";
 import { toast } from "react-hot-toast";
 import Loader from "../layout/Loader";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { setCartItem } from "../../redux/features/cartSlice";
 import MetaData from "../layout/MetaData"
+import NewReview from "../reviews/NewReview";
+import ListReview from "../reviews/ListReview";
 
 
 const ProductDetails = () => {
 
     const params = useParams();
-    const {data, isLoading, error, isError} = useGetProductDetailsQuery(params?.id);
-    const product = data?.product;
     const dispatch = useDispatch();
 
     const [activeImg, setActiveImg] = useState('');
     const [quantity, setQuantity] = useState(1);
+
+    const {data, isLoading, error, isError} = useGetProductDetailsQuery(params?.id);
+    const product = data?.product;
+    const { isAuthenticated} = useSelector((state) => state.auth)
 
     useEffect(() => {
         setActiveImg(product?.image[0] ? product?.image[0]?.url : '/image/mobile-phone.avif')
@@ -148,12 +152,16 @@ const ProductDetails = () => {
         <p>{product?.description}</p>
         <hr />
         <p id="product_seller mb-3">Sold by: <strong>{product?.seller}</strong></p>
-
+        
+        {isAuthenticated ? (
+          <NewReview productId={product?._id}></NewReview> ) : (
         <div className="alert alert-danger my-5" type="alert">
           Login to post your review.
         </div>
+        )}
       </div>
     </div>
+    {product?.reviews?.length > 0 && ( <ListReview reviews={product?.reviews}></ListReview>)}
     </>
     );
 };
