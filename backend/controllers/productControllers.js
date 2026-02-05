@@ -3,7 +3,8 @@ import Order from "../models/order.js"
 import ErrorHandler from "../utils/errorHandler.js";
 import APIFilters from "../utils/apiFilters.js"
 import catchAsyncErrors from "../middlewares/catchAsyncErrors.js";
-
+import {upload_file} from '../utils/cloudinary.js'
+import { delete_file } from "../utils/cloudinary.js";
 
 export const getProducts = catchAsyncErrors (async (req, res) => {
 
@@ -48,6 +49,14 @@ export const getProductDetails = async (req, res, next) => {
     });
 };
 
+export const getAdminProduct = async (req, res, next) => {
+    const products = await Product.find();
+
+    res.status(200).json({
+        products,
+    });
+};
+
 export const updateProduct = catchAsyncErrors (async (req, res) => {
     let product = await Product.findById(req?.params?.id);
 
@@ -64,11 +73,55 @@ export const updateProduct = catchAsyncErrors (async (req, res) => {
     });
 });
 
+export const uploadProductImages = catchAsyncErrors (async (req, res) => {
+    let product = await Product.findById(req?.params?.id);
+
+    if (!product) {
+        return next (new ErrorHandler("Product not found",404));
+    }
+
+    const uploader = async (image) => upload_file(image, "mobileshop/products")
+
+    const urls = await Promise.all((req?.body?.image).map(uploader))
+
+    product?.image?.push(...urls)
+    await product?.save();
+
+    res.status(200).json({
+        product,
+    });
+});
+
+export const deleteProductImage = catchAsyncErrors (async (req, res) => {
+    let product = await Product.findById(req?.params?.id);
+
+    if (!product) {
+        return next (new ErrorHandler("Product not found",404));
+    }
+
+    const isDeleted = await delete_file(req.body.imgId)
+
+    if(isDeleted) {
+        product.image = product?.image?.filter(
+          (img) => img.public_id !== req.body.imgId  
+        )
+        await product?.save();
+    }
+
+    res.status(200).json({
+        product,
+    });
+});
+
 export const deleteProduct = catchAsyncErrors (async (req, res) => {
     let product = await Product.findById(req?.params?.id);
 
     if (!product) {
         return next (new ErrorHandler("Product not found",404));
+    }
+
+    for (let i = 0; i < product?.image?.length; i++){
+        await delete_file(product?.image[i].public_id)
     }
 
     await product.deleteOne();
