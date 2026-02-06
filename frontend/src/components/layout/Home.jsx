@@ -13,17 +13,18 @@ import Filters from "./Filters";
 const Home = () => {
   
   const [searchParams] = useSearchParams();
+  const page = searchParams.get("page") || 1;
+
+  const params = { page };
+
   const keyword = searchParams.get("keyword") || "";
   const min = searchParams.get("min");
   const max = searchParams.get("max");
-  const category = searchParams.get("category");
 
-
-  const params = { keyword };
+  keyword && (params.keyword = keyword);
 
   min !== null && (params.min = min);
   max !== null && (params.max = max);
-  category !== null && (params.category = category);
 
 
   const { data, isLoading, error, isError } = useGetProductsQuery(params);

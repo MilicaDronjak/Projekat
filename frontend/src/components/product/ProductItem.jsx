@@ -7,7 +7,7 @@ const ProductItem = ({ product, columnSize }) => {
             <div className="card p-3 rounded">
                 <img
                     className="card-img-top mx-auto"
-                    src={product?.image?.[0]?.url}
+                    src={product?.image[0] ? product?.image[0]?.url : '/image/mobile-phone.avif'}
                     alt={product?.name}
                     style={{ width: "150px", height: "150px", objectFit: "cover" }}
                 />
