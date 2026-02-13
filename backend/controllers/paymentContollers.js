@@ -1,139 +1,125 @@
 import catchAsyncErrors from "../middlewares/catchAsyncErrors.js";
 import dotenv from "dotenv";
 dotenv.config({ path: "backend/config/config.env" });
-import Order from "../models/order.js"
+import Order from "../models/order.js";
 import Stripe from "stripe";
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
-export const stripeCheckoutSession = catchAsyncErrors(
-    async(req, res, next) => {
-
-        const body = req?.body
-
-        const line_items = body?.orderItems?.map((item) => {
-            return {
-                price_data: {
-                    currency: "usd",
-                    product_data: {
-                        name: item?.name,
-                        images:[item?.image],
-                        metadata: { productId: item?.product},
-                    },
-                    unit_amount: item?.price * 100
-                },
-                tax_rates: ["txr_1So5IhCW8pegmLsoyAnwKxNJ"],
-                quantity: item?.quantity,
-            };
-        });
-
-        const shippingInfo = body?.shippingInfo
-
-        const shipping_rate = body?.itemsPrice >= 200 ? "shr_1So5C8CW8pegmLsoRl00UC9G" : "shr_1So5CQCW8pegmLsoTPNpSYX3"
-
-        const session = await stripe.checkout.sessions.create({
-            payment_method_types: ["card"],
-            success_url: `${process.env.FRONTEND_URL}/me/orders?order_success=true`,
-            cancel_url: `${process.env.FRONTEND_URL}`,
-            customer_email: req?.user?.email,
-            client_reference_id: req?.user?._id.toString(),
-            mode: 'payment',
-            metadata: { ...shippingInfo, itemsPrice: body?.itemsPrice},
-            shipping_options: [
-                {
-                    shipping_rate,
-                },
-            ],
-            line_items,
-        })
-        res.status(200).json({
-            url: session.url,
-        });
-    }
-);
-
-const getOrderItems = async (line_items) => {
-    return new Promise ((resolve, reject) => {
-        let cartItems = [];
-
-        line_items?.data?.forEach(async (item) => {
-            const product = await stripe.products.retrieve(item.price.product);
-            const productId = product.metadata.productId;
-
-            cartItems.push({
-                product: productId,
-                name: product.name,
-                price: item.price.unit_amount_decimal / 100,
-                quantity: item.quantity,
-                image: product.images[0],
-            });
-            if (cartItems.length === line_items?.data?.length) {
-                resolve(cartItems);
-            }
-        });
-    });
+const getStripeInstance = () => {
+  if (!process.env.STRIPE_SECRET_KEY) {
+    throw new Error("STRIPE_SECRET_KEY nije definisan u .env fajlu!");
+  }
+  return new Stripe(process.env.STRIPE_SECRET_KEY);
 };
 
-export const stripeWebhook = catchAsyncErrors( async(req, res, next) => { 
-    try{
-        
-        const signature = req.headers["stripe-signature"]
+export const stripeCheckoutSession = catchAsyncErrors(async (req, res, next) => {
+  const stripe = getStripeInstance();
+  const body = req.body;
 
-        const event = stripe.webhooks.constructEvent(
-            req.rawBody,
-            signature,
-            process.env.STRIPE_WEBHOOK_SECRET
-        );
+  const line_items = body.orderItems?.map((item) => ({
+    price_data: {
+      currency: "usd",
+      product_data: {
+        name: item.name,
+        images: [item.image],
+        metadata: {
+          productId: item.product,
+        },
+      },
+      unit_amount: item.price * 100,
+    },
+    tax_rates: ["txr_1SzdEPEM1LUJDjpmTrHkWln1"],
+    quantity: item.quantity,
+  }));
 
-        if (event.type === "checkout.session.completed") {
-            const session = event.data.object;
-            const line_items = await stripe.checkout.sessions.listLineItems(
-                session.id
-            );
+  const shipping_rate = body?.itemsPrice >= 700 ? "shr_1SzdCgEM1LUJDjpmHMxFp9Pe" : "shr_1SzdD4EM1LUJDjpmnxOtQafQ"
 
-            const orderItems = await getOrderItems(line_items)
-            const user = session.client_reference_id
+  const session = await stripe.checkout.sessions.create({
+    payment_method_types: ["card"],
+    success_url: `${process.env.FRONTEND_URL}/me/orders?order_success=true`,
+    cancel_url: `${process.env.FRONTEND_URL}`,
+    customer_email: req.user.email,
+    client_reference_id: req.user._id.toString(),
+    mode: "payment",
+    metadata: {
+      ...body.shippingInfo,
+      itemsPrice: body.itemsPrice.toString(),
+    },
+    shipping_options: [
+      {
+        shipping_rate,
+      },
+    ],
+    line_items,
+  });
 
-            const totalAmount = session.amount_total / 100;
-            const taxAmount = session.total_details.amount_tax /100;
-            const shippingAmount = session.total_details.amount_shipping / 100;
-            const itemsPrice = session.metadata.itemsPrice;
+  res.status(200).json({
+    url: session.url,
+  });
+});
 
-            const shippingInfo = {
-                address: session.metadata.address,
-                city: session.metadata.city,
-                phoneNo: session.metadata.phoneNo,
-                zipCode: session.metadata.zipCode,
-                country: session.metadata.country,
-            }
+const getOrderItems = async (line_items) => {
+  const stripe = getStripeInstance();
+  const cartItems = [];
 
-            const paymentInfo = {
-                id: session.payment_intent,
-                status: session.payment_status,
-            }
+  for (const item of line_items.data) {
+    const product = await stripe.products.retrieve(item.price.product);
+    cartItems.push({
+      product: product.metadata.productId,
+      name: product.name,
+      price: item.price.unit_amount_decimal / 100,
+      quantity: item.quantity,
+      image: product.images[0],
+    });
+  }
 
-            const orderData = {
-                shippingInfo,
-                orderItems,
-                itemsPrice,
-                taxAmount,
-                shippingAmount,
-                totalAmount,
-                paymentInfo,
-                paymentMethod: "Card",
-                user,
-            }
+  return cartItems;
+};
 
-            await orderData.create(orderData)
+export const stripeWebhook = catchAsyncErrors(async (req, res, next) => {
+  const stripe = getStripeInstance();
+  const signature = req.headers["stripe-signature"];
+  let event;
 
-                console.log("=============")
-                console.log(orderItems)
-                console.log("=============")
+  try {
+    event = stripe.webhooks.constructEvent(
+      req.rawBody,
+      signature,
+      process.env.STRIPE_WEBHOOK_SECRET
+    );
+  } catch (error) {
+    console.error("Neuspešna verifikacija Stripe potpisa:", error.message);
+    return res.status(400).send(`Webhook Error: ${error.message}`);
+  }
 
-            res.status(200).json({ success: true})
-        }    
-    } catch(error) {
-        console.log("=============")
-        console.log("Error =>", error)
-        console.log("=============")
-    }
-})
+  if (event.type === "checkout.session.completed") {
+    const session = event.data.object;
+    const line_items = await stripe.checkout.sessions.listLineItems(session.id);
+    const orderItems = await getOrderItems(line_items);
+
+    const orderData = {
+      shippingInfo: {
+        address: session.metadata.address,
+        city: session.metadata.city,
+        phoneNo: session.metadata.phoneNo,
+        zipCode: session.metadata.zipCode,
+        country: session.metadata.country,
+      },
+      orderItems,
+      itemsPrice: parseFloat(session.metadata.itemsPrice),
+      taxAmount: session.total_details.amount_tax / 100,
+      shippingAmount: session.total_details.amount_shipping / 100,
+      totalAmount: session.amount_total / 100,
+      paymentInfo: {
+        id: session.payment_intent,
+        status: session.payment_status,
+      },
+      paymentMethod: "CARD",
+      user: session.client_reference_id,
+    };
+
+    await Order.create(orderData);
+  }
+
+
+  res.status(200).end();
+});

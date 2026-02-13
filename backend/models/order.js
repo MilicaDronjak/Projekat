@@ -61,6 +61,10 @@ const orderSchema = new mongoose.Schema({
             message: "Please select: COD or Card",
         },
     },
+    paymentInfo: {
+      id: String,
+      status: String,
+    },
     itemsPrice: {
         type: Number,
         required: true,

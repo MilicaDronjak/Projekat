@@ -73,23 +73,23 @@ export const updateProduct = catchAsyncErrors (async (req, res) => {
     });
 });
 
-export const uploadProductImages = catchAsyncErrors (async (req, res) => {
-    let product = await Product.findById(req?.params?.id);
+export const uploadProductImages = catchAsyncErrors(async (req, res) => {
+  let product = await Product.findById(req?.params?.id);
 
-    if (!product) {
-        return next (new ErrorHandler("Product not found",404));
-    }
+  if (!product) {
+    return next(new ErrorHandler("Product not found", 404));
+  }
 
-    const uploader = async (image) => upload_file(image, "mobileshop/products")
+  const uploader = async (image) => upload_file(image, "mobileshop/products");
 
-    const urls = await Promise.all((req?.body?.image).map(uploader))
+  const urls = await Promise.all((req?.body?.images).map(uploader));
 
-    product?.image?.push(...urls)
-    await product?.save();
+  product?.images?.push(...urls);
+  await product?.save();
 
-    res.status(200).json({
-        product,
-    });
+  res.status(200).json({
+    product,
+  });
 });
 
 export const deleteProductImage = catchAsyncErrors (async (req, res) => {
@@ -102,7 +102,7 @@ export const deleteProductImage = catchAsyncErrors (async (req, res) => {
     const isDeleted = await delete_file(req.body.imgId)
 
     if(isDeleted) {
-        product.image = product?.image?.filter(
+        product.images = product?.images?.filter(
           (img) => img.public_id !== req.body.imgId  
         )
         await product?.save();
@@ -110,7 +110,7 @@ export const deleteProductImage = catchAsyncErrors (async (req, res) => {
 
     res.status(200).json({
         product,
-    });
+    });s
 });
 
 export const deleteProduct = catchAsyncErrors (async (req, res) => {
@@ -120,8 +120,8 @@ export const deleteProduct = catchAsyncErrors (async (req, res) => {
         return next (new ErrorHandler("Product not found",404));
     }
 
-    for (let i = 0; i < product?.image?.length; i++){
-        await delete_file(product?.image[i].public_id)
+    for (let i = 0; i < product?.images?.length; i++){
+        await delete_file(product?.images[i].public_id)
     }
 
     await product.deleteOne();

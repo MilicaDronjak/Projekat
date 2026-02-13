@@ -23,7 +23,7 @@ const ProductDetails = () => {
     const { isAuthenticated} = useSelector((state) => state.auth)
 
     useEffect(() => {
-        setActiveImg(product?.image[0] ? product?.image[0]?.url : '/image/mobile-phone.avif')
+        setActiveImg(product?.images[0] ? product?.images[0]?.url : '/image/mobile-phone.avif')
     }, [product])
 
     useEffect (() => {
@@ -54,7 +54,7 @@ const ProductDetails = () => {
             product: product?._id,
             name: product?.name,
             price: product?.price,
-            image: product?.image[0].url,
+            image: product?.images[0].url,
             stock: product?.stock,
             quantity
         }
@@ -79,7 +79,7 @@ const ProductDetails = () => {
           />
         </div>
         <div className="row justify-content-start mt-5">
-            {product?.image?.map((img) => (
+            {product?.images?.map((img) => (
                 <div className="col-2 ms-4 mt-2">
                 <img
                     className={`d-block border rounded p-3 cursor-pointer ${img.url === activeImg ? "border-warning" : ""}`}

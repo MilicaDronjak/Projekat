@@ -11,7 +11,7 @@ const UploadImages = () => {
     const params = useParams();
     const navigate = useNavigate();
 
-    const [image, setImages] = useState([]);
+    const [images, setImages] = useState([]);
     const [imagesPreview, setImagesPreview] = useState([]);
     const [uploadedImages, setUploadedImages] = useState([]);
 
@@ -23,11 +23,8 @@ const UploadImages = () => {
 
     useEffect(() => {
         if (data?.product) {
-            setUploadedImages(data?.product?.image)
+            setUploadedImages(data?.product?.images)
         }
-        console.log('===================')
-        console.log(error)
-        console.log('===================')
         if(error) {
             toast.error(error?.data?.message)
         }
@@ -74,7 +71,7 @@ const UploadImages = () => {
     const submitHandler = (e) => {
         e.preventDefault()
 
-        uploadProductImages({ id: params?.id, body: {image}})
+        uploadProductImages({ id: params?.id, body: { images} })
     }
 
     const deleteImage = (imgId) => {

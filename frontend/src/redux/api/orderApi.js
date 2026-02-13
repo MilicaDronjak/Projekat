@@ -55,7 +55,7 @@ export const orderApi = createApi({
                     method: "DELETE",
                 }
             },
-            invalidatesTags: ["AdminOrders"] // Ovo je ključno za refetch
+            invalidatesTags: ["AdminOrders"] 
         }),
     }),
 });
